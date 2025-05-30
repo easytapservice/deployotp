@@ -51,12 +51,12 @@ app.post('/send-otp', async (req, res) => {
             </div>
             <h2 style="color: #333; text-align: center;">Your One-Time Password (OTP)</h2>
             <p style="text-align: center;">Use the following OTP to proceed. This code is valid for <strong>5 minutes</strong>.</p>
-            <div style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #2b2b2b; margin: 30px 0; text-align: center;">
+            <div style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color:rgb(10, 204, 178); margin: 30px 0; text-align: center;">
               ${otp}
             </div>
             <p style="text-align: center;">If you did not request this, please ignore this email.</p>
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #ccc;" />
-            <p style="font-size: 12px; color: #777; text-align: center;">— Your App Team</p>
+            <p style="font-size: 12px; color: #777; text-align: center;">— Be Easy Be Happy —</p>
           </div>
         </div>
       `
