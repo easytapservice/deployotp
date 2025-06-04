@@ -11,6 +11,24 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// 🔐 Middleware to check Supabase API key
+app.use((req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const apiKey = authHeader && authHeader.startsWith('Bearer ')
+    ? authHeader.split(' ')[1]
+    : null;
+
+  const validKey = process.env.SUPABASE_KEY;
+
+  if (!apiKey || apiKey !== validKey) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key.' });
+  }
+
+  next();
+});
+
+
+
 // In-memory OTP store (use Redis or DB in production)
 const otpStore = new Map();
 
