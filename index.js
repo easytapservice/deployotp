@@ -11,25 +11,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// 🔐 Middleware to check Supabase API key
-app.use((req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const apiKey = authHeader && authHeader.startsWith('Bearer ')
-    ? authHeader.split(' ')[1]
-    : null;
-
-  const validKey = process.env.SUPABASE_KEY;
-
-  if (!apiKey || apiKey !== validKey) {
-    return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key.' });
-  }
-
-  next();
-});
-
-
-
-// In-memory OTP store (use Redis or DB in production)
+// In-memory OTP store (consider using Redis or DB in production)
 const otpStore = new Map();
 
 // Email transporter configuration
@@ -46,13 +28,19 @@ function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Endpoint to send OTP
+// Endpoint to send OTP (requires Supabase anon key)
 app.post('/send-otp', async (req, res) => {
   const { email } = req.body;
+  const clientKey = req.headers['x-api-key'];
+
+  if (!clientKey || clientKey !== process.env.SUPABASE_ANON_KEY) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid or missing Supabase anon key.' });
+  }
+
   if (!email) return res.status(400).json({ error: 'Email is required.' });
 
   const otp = generateOtp();
-  const expiresAt = Date.now() + 5 * 60 * 1000; // valid for 5 minutes
+  const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
 
   otpStore.set(email, { otp, expiresAt });
 
@@ -65,7 +53,7 @@ app.post('/send-otp', async (req, res) => {
         <div style="font-family: Arial, sans-serif; background-color: #eeeeee; padding: 40px 0;">
           <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #ddd; padding: 20px;">
             <div style="text-align: center; margin-bottom: 20px;">
-              <img src="https://iglsabilpyvarzdadocj.supabase.co/storage/v1/object/sign/learn/Group%2011557.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InN0b3JhZ2UtdXJsLXNpZ25pbmcta2V5XzBhNDZjYWRiLTUzN2MtNDMzOC05YThiLWFkNmU3ZTQ5ODNiYSJ9.eyJ1cmwiOiJsZWFybi9Hcm91cCAxMTU1Ny5wbmciLCJpYXQiOjE3NDg1OTc3NDksImV4cCI6MTc4MDEzMzc0OX0.AhliWvzTSwk6XYOYzxJfmuY5Z2tbo_LfDcFgtltIRAw" alt="Your Logo" style="max-width: 150px; height: auto;" />
+              <img src="https://iglsabilpyvarzdadocj.supabase.co/storage/v1/object/sign/learn/Group%2011557.png?token=your-token-here" alt="Your Logo" style="max-width: 150px; height: auto;" />
             </div>
             <h2 style="color: #333; text-align: center;">Your One-Time Password (OTP)</h2>
             <p style="text-align: center;">Use the following OTP to proceed. This code is valid for <strong>5 minutes</strong>.</p>
@@ -90,6 +78,7 @@ app.post('/send-otp', async (req, res) => {
 // Endpoint to verify OTP
 app.post('/verify-otp', (req, res) => {
   const { email, otp } = req.body;
+
   if (!email || !otp) return res.status(400).json({ error: 'Email and OTP are required.' });
 
   const record = otpStore.get(email);
@@ -108,7 +97,7 @@ app.post('/verify-otp', (req, res) => {
   res.json({ message: 'OTP verified successfully!' });
 });
 
-// Start server
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
